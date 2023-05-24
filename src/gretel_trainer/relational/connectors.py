@@ -42,7 +42,7 @@ class Connector:
         logger.info("Successfully connected to db")
 
     def extract(
-        self, only: Optional[list[str]] = None, ignore: Optional[list[str]] = None
+        self, only: Optional[list[str]] = None, ignore: Optional[list[str]] = None, schema: Optional[str] = None
     ) -> RelationalData:
         """
         Extracts table data and relationships from the database.
@@ -56,12 +56,12 @@ class Connector:
         relational_data = RelationalData()
         foreign_keys: list[tuple[str, dict]] = []
 
-        for table_name in inspector.get_table_names():
+        for table_name in inspector.get_table_names(schema=schema):               
             if skip_table(table_name, only, ignore):
                 continue
 
             logger.debug(f"Extracting source data from `{table_name}`")
-            df = pd.read_sql_table(table_name, self.engine)
+            df = pd.read_sql_table(table_name, self.engine, schema=schema)
             primary_key = inspector.get_pk_constraint(table_name)["constrained_columns"]
             for fk in inspector.get_foreign_keys(table_name):
                 if skip_table(fk["referred_table"], only, ignore):
